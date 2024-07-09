@@ -23,7 +23,7 @@ while True:
     if comand == "/list":
             client.list()
     elif comand == "/addr":
-        recipient = input("\nDigite o nome do usuário que deseja se conectar: ")
+        recipient = input("\nDigite o nome do usuário ao qual deseja-se conectar: ")
         client.address(recipient)
     elif comand == "/send":
         client.send_message()

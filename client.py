@@ -1,6 +1,6 @@
 from socket import *
-from random import randint
 import threading
+
 class Client:
     def __init__(self):
         self.server_ip = "200.235.131.66"
@@ -16,7 +16,7 @@ class Client:
     def create_port(self, user):
         self.username = user
         try:
-            ip, port = self.client_socket.getsockname()
+            _, port = self.client_socket.getsockname()
             self.client_socket.bind(self.client_socket.getsockname())
         except OSError:
             pass
@@ -38,9 +38,13 @@ class Client:
     def address(self, recipient):
         self.client_socket.send(f"ADDR {recipient}\r\n".encode())
         addr_message = self.recv_from_server()
-        ip, port = addr_message.split(':')
-        self.communication_socket.connect((ip, port))
-        self.send_message(f"USER {self.username}:{port}\r\n")        
+
+        comand, result = (addr_message.decode()).split('')
+        ip, port = result.split(':')
+
+        self.communication_socket.connect(ip, int(port))
+        self.send_message(f"USER {self.username}:{port}\r\n") 
+        self.recv_from_server()       
 
     def send_message(self, message):
         self.communication_socket.send(message.encode())
