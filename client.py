@@ -11,7 +11,6 @@ class Client:
 
     def connect(self):
         self.client_socket.connect((self.server_ip, self.server_port))
-        # self.recv_from_server()
 
     def create_port(self, user):
         self.username = user
@@ -29,7 +28,6 @@ class Client:
 
     def send_user_port(self, user_port):
         self.client_socket.send(user_port.encode())
-        # self.recv_from_server()
 
     def list(self):
         self.client_socket.send("LIST\r\n".encode())
@@ -39,10 +37,10 @@ class Client:
         self.client_socket.send(f"ADDR {recipient}\r\n".encode())
         addr_message = self.recv_from_server()
 
-        comand, result = (addr_message.decode()).split('')
+        comand, result = (addr_message.decode()).split(' ')
         ip, port = result.split(':')
 
-        self.communication_socket.connect(ip, int(port))
+        self.communication_socket.connect((ip, int(port)))
         self.send_message(f"USER {self.username}:{port}\r\n") 
         self.recv_from_server()       
 
