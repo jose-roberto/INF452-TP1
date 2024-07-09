@@ -12,7 +12,7 @@ client.connect()
 # client.keep()
 
 username = input("Digite o seu nome de usuário: ")
-port = client.create_port()
+port = client.create_port(username)
 
 user_port = f"USER {username}:{port}\r\n"
 client.send_user_port(user_port)
