@@ -12,14 +12,11 @@ class Client:
         # self.recv_from_server()
 
     def create_port(self):
-        while True:
-            try:
-                ip = self.clientSocket.getsockname()
-                port = randint(1025, 63535)
-                self.clientSocket.bind((ip, port))
-                break
-            except OSError:
-                pass
+        try:
+            ip, port = self.clientSocket.getsockname()
+            self.clientSocket.bind(self.clientSocket.getsockname())
+        except OSError:
+            pass
 
         return port
 
