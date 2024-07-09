@@ -2,28 +2,32 @@ from server import Server
 from client import Client
 
 INITIAL_PORT = 10001
-CLIENT_COUNT = 0
 
 comands_known = ["/list", "/send", "/help", "/exit"]
 
-server = Server()
+print("Bem-vindo ao chat!")
 
-while True:
-    comand = input("----------- Menu -----------\nEntrar no bate-papo: 1\nSair: 2\n\nDigite um comando: ")
+client = Client()
+client.connect()
+# client.keep()
 
-    if comand == "1":
-        CLIENT_COUNT += 1
-        
-        print("\nEntrando no bate-papo")
+username = input("Digite o seu nome de usuário: ")
+port = client.create_port()
 
-        username = input("Digite o seu nome de usuário: ")
-        port = INITIAL_PORT + CLIENT_COUNT
+user_port = f"USER {username}:{port}\r\n"
+client.send_user_port(user_port)
 
-        client = Client(username, port)
-
-        client.connect()
-
-        comand = input("---------- Opcões ----------\nListar usuários: /list\nEnviar mensagem: /send\nAjuda: /help\nSair: /exit\n\nEscolha uma ação:")
-
-    else:
+while True: 
+    comand = input("\n---------- Menu ----------\nListar usuários: /list\nConectar-se: /addr\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
+    
+    if comand == "/list":
+            client.list()
+    elif comand == "/addr":
+        recipient = input("\nDigite o nome do usuário que deseja se conectar: ")
+        client.address(recipient)
+    elif comand == "/send":
+        client.send_message()
+    elif comand == "/exit":
         break
+    else:
+        print("\n--- Comando inválido, tente novamente.")
