@@ -26,14 +26,11 @@ class Client:
     def connect_to_central_server(self):
         self.central_server_socket.connect(
             (self.central_server_ip, self.central_server_port))
-        print("Connected to central server")
-        
-        # self.keep()
+        print("\nConectado ao servidor central!")
 
     # Mantém a conexão com o servidor central
-    # def keep(self):
-    #     self.client_socket.send("KEEP\r\n".encode())
-    #     threading.Timer(5.0, self.keep).start()
+    def keepalive(self):
+        self.central_server_socket.send("KEEP\r\n".encode())
 
     # Define p2p_socket como o responsável por ouvir novas conexões
     def p2p_listening(self):
@@ -45,7 +42,7 @@ class Client:
         except OSError:
             pass
 
-        print("p2p_listening_port:", self.p2p_listening_port)
+        print("p2p_listening_port: ", self.p2p_listening_port)
         
         self.send_initial_message()
     
@@ -63,9 +60,9 @@ class Client:
 
             # Exibe informações sobre a conexão
             with connectionSocket:
-                print("Connected by", addr)
+                print("Connectado a: ", addr)
                 message = connectionSocket.recv(1024)
-                print("Message:", message.decode())
+                print("Messagem recebida:", message.decode())
 
     # Lista os usuários conectados
     def get_list(self):
@@ -78,7 +75,7 @@ class Client:
 
         try:
             received = self.central_server_socket.recv(1024)
-            print("Server:", received.decode())
+            print("\nServer:", received.decode())
         except TimeoutError:
             print("TimeoutError")
             pass
