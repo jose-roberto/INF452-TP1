@@ -8,9 +8,9 @@ CENTRAL_SERVER_IP = "200.235.131.66"
 CENTRAL_SERVER_PORT = 10000
 
 # Comandos válidos
-known_commands = ["/list", "/send", "/help", "/exit"]
+known_commands = ["/list", "/chat", "/send", "/exit"]
 
-print("Bem-vindo ao chat!")
+print("Bem-vindo ao Whatsapp 2!")
 
 username = input("Digite o seu nome de usuário: ")
 
@@ -40,14 +40,14 @@ listener_thread.start()
 
 while True:
     command = input(
-        "\n---------- Menu ----------\nListar usuários: /list\nConectar-se: /addr\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
+        "\n---------- Menu ----------\nListar usuários: /list\nEntrar em um bate-papo: /chat\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
 
     if command == "/list":
         client.get_list()
-    elif command == "/addr":
+    elif command == "/chat":
         recipient = input(
-            "\nDigite o nome do usuário ao qual deseja-se conectar: ")
-        # client.get_address(recipient)
+            "\nCom qual usuário você deseja conversar: ")
+        client.connect_to_peer(recipient)
     elif command == "/send":
         # client.send_message()
         pass
