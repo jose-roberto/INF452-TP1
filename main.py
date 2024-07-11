@@ -1,41 +1,46 @@
+# Bibliotecas necessárias
 from client import Client
 import threading
 
-INITIAL_PORT = 10001
+# Endereço do servidor central
+CENTRAL_SERVER_IP = "200.235.131.66"
+CENTRAL_SERVER_PORT = 10001
 
-comands_known = ["/list", "/send", "/help", "/exit"]
+# Comandos válidos
+known_commands = ["/list", "/send", "/help", "/exit"]
 
 print("Bem-vindo ao chat!")
 
-client = Client()
-client.connect_to_central_server()
-# client.keep()
-
 username = input("Digite o seu nome de usuário: ")
-port = client.create_port(username)
 
-client.send_user_port(username, port)
+# Inicializa o cliente
+client = Client(username, CENTRAL_SERVER_IP, CENTRAL_SERVER_PORT)
 
+# Função para verificar se há novas mensagens
 def check_requests():
     while True:
         client.check_requests()
 
+# Inicia a thread para verificar novas mensagens
 listener_thread = threading.Thread(target=check_requests)
 listener_thread.daemon = True
 listener_thread.start()
 
-while True: 
-    comand = input("\n---------- Menu ----------\nListar usuários: /list\nConectar-se: /addr\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
-    
-    if comand == "/list":
-            client.get_list()
-    elif comand == "/addr":
-        recipient = input("\nDigite o nome do usuário ao qual deseja-se conectar: ")
-        client.get_address(recipient)
-    elif comand == "/send":
-        client.send_message()
-    elif comand == "/exit":
+while True:
+    command = input(
+        "\n---------- Menu ----------\nListar usuários: /list\nConectar-se: /addr\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
+
+    if command == "/list":
+        client.get_list()
+    elif command == "/addr":
+        recipient = input(
+            "\nDigite o nome do usuário ao qual deseja-se conectar: ")
+        # client.get_address(recipient)
+    elif command == "/send":
+        # client.send_message()
+        pass
+    elif command == "/exit":
         # fechar conexões, etc
         break
     else:
-        print("\n--- Comando inválido, tente novamente.")
+        print("\n--- commando inválido, tente novamente.")
