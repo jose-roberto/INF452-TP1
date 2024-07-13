@@ -1,7 +1,6 @@
 # Bibliotecas necessárias
-from client import Client
+from client import *
 import time
-import threading
 
 # Endereço do servidor central
 CENTRAL_SERVER_IP = "200.235.131.66"
