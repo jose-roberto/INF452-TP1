@@ -24,8 +24,7 @@ class Client:
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
-        self.central_server_socket.connect(
-            (self.central_server_ip, self.central_server_port))
+        self.central_server_socket.connect((self.central_server_ip, self.central_server_port))
         print("\nConectado ao servidor central!")
 
     # Mantém a conexão com o servidor central
@@ -53,20 +52,24 @@ class Client:
         initial_message = f"USER {self.username}:{self.p2p_listening_port}\r\n"
         self.central_server_socket.send(initial_message.encode())
     
-            
     def start_chat(self, chat_socket, addr):
         # Exibe informações sobre a conexão
-        with chat_socket:
-            print("Conectado a: ", addr)
-            message = chat_socket.recv(1024)
-            print("Mensagem recebida:", message.decode())
-            chat_socket.send("Mensagem recebida!\r\n".encode())
+        # with chat_socket:
+        #     print("Conectado a: ", addr)
+        #     message = chat_socket.recv(1024)
+        #     print("Mensagem recebida:", message.decode())
+        #     chat_socket.send("Mensagem recebida!\r\n".encode())
+
+        while True:
+            print(chat_socket.recv(1024).decode())
+            message = input()
+            chat_socket.send(message.encode())
 
     # Verifica se há novas requisições de conexão
     def check_requests(self):
-        ready_to_read, _, _ = select.select([self.p2p_listening_socket], [], []) # Garante que a função não bloqueie o programa
+        # ready_to_read, _, _ = select.select([self.p2p_listening_socket], [], []) # Garante que a função não bloqueie o programa
 
-        if ready_to_read:
+        # if ready_to_read:
             chat_socket, addr = self.p2p_listening_socket.accept()  # Aceita uma conexão
 
             # Cria e inicia uma nova thread para lidar com a conexão
@@ -78,9 +81,8 @@ class Client:
     def get_list(self):
         self.central_server_socket.send("LIST\r\n".encode())
 
-        received_message = self.received_messages(self.central_server_socket)
+        list = self.received_messages(self.central_server_socket)
         
-        list = received_message.decode()
         list = list.replace("\r\n", "")
         _, users = (list.split(' '))
 
@@ -94,9 +96,7 @@ class Client:
     def get_address(self, recipient):
         self.central_server_socket.send((f"ADDR {recipient}\r\n").encode())
         
-        received_message = self.received_messages(self.central_server_socket)
-
-        address = received_message.decode()
+        address= self.received_messages(self.central_server_socket)
         
         _, address = address.split(' ')
         ip, port = address.split(':')
@@ -110,10 +110,10 @@ class Client:
 
             self.p2p_to_connect.connect((ip, port))
 
+            print("Conectado com sucesso! Para disconectar digite /disconnect")
+
             self.send_message_to_peer(port)
 
-            received_message = self.received_messages(self.p2p_to_connect)
-            print("Peer:", received_message.decode())
         except TimeoutError:
             print(
                 f"Não foi possível conectar-se a {recipient} devido a um timeout.")
@@ -125,15 +125,23 @@ class Client:
         message = f"USER {self.username}:{port}\r\n"
         self.p2p_to_connect.send(message.encode())
 
+        while True:
+            message = input("Digite uma mensagem: ")
+            if message == "/disconnect":
+                self.p2p_to_connect.send("DISCONNECT\r\n".encode())
+                self.p2p_to_connect.close()
+                break 
+            self.p2p_to_connect.send(message.encode())
+            print(self.p2p_to_connect.recv(1024).decode())
+
     # Recebe mensagens do servidor central
     def received_messages(self, socket):
         received_message = None
         
         try:
             received_message = socket.recv(1024)
-            # print("\nCentral Server:", received_message.decode())
         except TimeoutError:
             print("TimeoutError")
             pass
 
-        return received_message
+        return received_message.decode()

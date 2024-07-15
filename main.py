@@ -44,8 +44,7 @@ while True:
     if command == "/list":
         client.get_list()
     elif command == "/chat":
-        recipient = input(
-            "\nCom qual usuário você deseja conversar: ")
+        recipient = input("\nCom qual usuário você deseja conversar: ")
         client.connect_to_peer(recipient)
     elif command == "/send":
         # client.send_message()
