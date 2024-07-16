@@ -20,12 +20,12 @@ class Client:
 
         self.p2p_listening()
 
-        self.p2p_to_connect = socket(AF_INET, SOCK_STREAM)
+        self.peers_list = {}
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
         self.central_server_socket.connect((self.central_server_ip, self.central_server_port))
-        print("\nConectado ao servidor central!")
+        # print("\nConectado ao servidor central!")
 
     # Mantém a conexão com o servidor central
     def keepalive(self):
@@ -41,16 +41,19 @@ class Client:
             _, self.p2p_listening_port = self.p2p_listening_socket.getsockname()
         except OSError:
             pass
-
-        print("p2p_listening_port: ", self.p2p_listening_port)
-
-        self.send_initial_message()
+  
+        self.send_initial_message(self.central_server_socket, self.p2p_listening_port)
 
     # Envia mensagem inicial ao servidor central
-    def send_initial_message(self):
-        # Envia a porta de escuta por onde outros clientes poderão se conectar
-        initial_message = f"USER {self.username}:{self.p2p_listening_port}\r\n"
-        self.central_server_socket.send(initial_message.encode())
+    def send_initial_message(self, socket, port):
+        initial_message = None
+
+        if port == -1:
+            initial_message = f"USER {self.username}\r\n"
+        else:
+            initial_message = f"USER {self.username}:{port}\r\n"
+
+        socket.send(initial_message.encode())
     
     def start_chat(self, chat_socket, addr):
         # Exibe informações sobre a conexão
@@ -59,23 +62,28 @@ class Client:
         #     message = chat_socket.recv(1024)
         #     print("Mensagem recebida:", message.decode())
         #     chat_socket.send("Mensagem recebida!\r\n".encode())
+        received = self.received_messages(chat_socket)
+        user = (received.split(' ')[1]).replace("\r\n", "")
+        self.peers_list[user] = chat_socket
+        print(f"\nConectado a: {user}\n")
 
-        while True:
-            print(chat_socket.recv(1024).decode())
-            message = input()
-            chat_socket.send(message.encode())
+        # while True:
+        #     print(f"{user}: {self.received_messages(chat_socket)}")
+        #     self.send_message_to_peer(user)
 
     # Verifica se há novas requisições de conexão
     def check_requests(self):
         # ready_to_read, _, _ = select.select([self.p2p_listening_socket], [], []) # Garante que a função não bloqueie o programa
 
         # if ready_to_read:
-            chat_socket, addr = self.p2p_listening_socket.accept()  # Aceita uma conexão
+        chat_socket, addr = self.p2p_listening_socket.accept()  # Aceita uma conexão
 
-            # Cria e inicia uma nova thread para lidar com a conexão
-            chat_thread = threading.Thread(target=self.start_chat, args=(chat_socket, addr))
-            chat_thread.daemon = True
-            chat_thread.start()
+        # self.start_chat(chat_socket, addr)
+
+        # # Cria e inicia uma nova thread para lidar com a conexão
+        # chat_thread = threading.Thread(target=self.start_chat, args=(chat_socket, addr))
+        # chat_thread.daemon = True
+        # chat_thread.start()
 
     # Lista os usuários conectados
     def get_list(self):
@@ -108,11 +116,11 @@ class Client:
         try:
             ip, port = self.get_address(recipient)
 
-            self.p2p_to_connect.connect((ip, port))
+            self.peers_list[recipient] = socket(AF_INET, SOCK_STREAM)
 
-            print("Conectado com sucesso! Para disconectar digite /disconnect")
+            self.peers_list[recipient].connect((ip, port))
 
-            self.send_message_to_peer(port)
+            self.send_initial_message(self.peers_list[recipient], -1)
 
         except TimeoutError:
             print(
@@ -121,18 +129,18 @@ class Client:
             print(f"Erro ao conectar-se a {recipient}: {e}")
 
     # Envia mensagem à um usuário
-    def send_message_to_peer(self, port):
-        message = f"USER {self.username}:{port}\r\n"
-        self.p2p_to_connect.send(message.encode())
-
+    def send_message_to_peer(self, recipient):
+        socket = self.peers_list[recipient]
         while True:
             message = input("Digite uma mensagem: ")
             if message == "/disconnect":
-                self.p2p_to_connect.send("DISCONNECT\r\n".encode())
-                self.p2p_to_connect.close()
+                socket.send("DISC\r\n".encode())
+                socket.close()
+                break
+            elif message == "/exit":
                 break 
-            self.p2p_to_connect.send(message.encode())
-            print(self.p2p_to_connect.recv(1024).decode())
+            socket.send(message.encode())
+            print(self.received_messages(socket))
 
     # Recebe mensagens do servidor central
     def received_messages(self, socket):
@@ -142,6 +150,6 @@ class Client:
             received_message = socket.recv(1024)
         except TimeoutError:
             print("TimeoutError")
-            pass
+            return
 
         return received_message.decode()

@@ -39,18 +39,17 @@ listener_thread.start()
 
 while True:
     command = input(
-        "\n---------- Menu ----------\nListar usuários: /list\nEntrar em um bate-papo: /chat\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
+        "\n---------- Menu ----------\nListar usuários: /list\nIniciar bate-papo: /chat\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
 
     if command == "/list":
         client.get_list()
     elif command == "/chat":
         recipient = input("\nCom qual usuário você deseja conversar: ")
         client.connect_to_peer(recipient)
-    elif command == "/send":
-        # client.send_message()
-        pass
+        print("Conectado com sucesso!\nPara disconectar digite /disconnect. Para sair do chat digite /exit.")
+        client.send_message_to_peer(recipient)
     elif command == "/exit":
         # fechar conexões, etc
         break
-    else:
-        print("\n--- commando inválido, tente novamente.")
+    # else:
+    #     print("\n--- commando inválido, tente novamente.")
