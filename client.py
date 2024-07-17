@@ -2,6 +2,7 @@
 import select
 from socket import *
 import threading
+import sys
 
 
 class Client:
@@ -55,35 +56,25 @@ class Client:
 
         socket.send(initial_message.encode())
     
-    def start_chat(self, chat_socket, addr):
-        # Exibe informações sobre a conexão
-        # with chat_socket:
-        #     print("Conectado a: ", addr)
-        #     message = chat_socket.recv(1024)
-        #     print("Mensagem recebida:", message.decode())
-        #     chat_socket.send("Mensagem recebida!\r\n".encode())
+    def start_chat(self, chat_socket):
         received = self.received_messages(chat_socket)
         user = (received.split(' ')[1]).replace("\r\n", "")
+
         self.peers_list[user] = chat_socket
+
         print(f"\nConectado a: {user}\n")
 
-        # while True:
-        #     print(f"{user}: {self.received_messages(chat_socket)}")
-        #     self.send_message_to_peer(user)
+        while True:
+            print(f"{user}: {self.received_messages(chat_socket)}")
+            self.send_message_to_peer(user)
 
     # Verifica se há novas requisições de conexão
     def check_requests(self):
-        # ready_to_read, _, _ = select.select([self.p2p_listening_socket], [], []) # Garante que a função não bloqueie o programa
-
-        # if ready_to_read:
-        chat_socket, addr = self.p2p_listening_socket.accept()  # Aceita uma conexão
-
-        # self.start_chat(chat_socket, addr)
-
-        # # Cria e inicia uma nova thread para lidar com a conexão
-        # chat_thread = threading.Thread(target=self.start_chat, args=(chat_socket, addr))
-        # chat_thread.daemon = True
-        # chat_thread.start()
+        ready_to_read,_,_=select.select([self.p2p_listening_socket,self.central_server_socket,sys.stdin],[],[])
+        for sock in ready_to_read:
+            if sock == self.p2p_listening_socket:
+                chat_socket, _ = self.p2p_listening_socket.accept()  # Aceita uma conexão
+                self.start_chat(chat_socket)
 
     # Lista os usuários conectados
     def get_list(self):
@@ -131,14 +122,17 @@ class Client:
     # Envia mensagem à um usuário
     def send_message_to_peer(self, recipient):
         socket = self.peers_list[recipient]
+        
         while True:
             message = input("Digite uma mensagem: ")
+
             if message == "/disconnect":
                 socket.send("DISC\r\n".encode())
                 socket.close()
                 break
             elif message == "/exit":
                 break 
+
             socket.send(message.encode())
             print(self.received_messages(socket))
 
