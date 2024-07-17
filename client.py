@@ -22,6 +22,7 @@ class Client:
         self.p2p_listening()
 
         self.peers_list = {}
+        self.thread_flags = {}
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
@@ -123,6 +124,7 @@ class Client:
     # Envia mensagem à um usuário
     def send_message_to_peer(self, recipient):
         socket = self.peers_list[recipient]
+        self.thread_flags[recipient] = True
 
         comm_thread = threading.Thread(target=self.print_messages, args=(socket,recipient))
         comm_thread.daemon = True
@@ -131,15 +133,27 @@ class Client:
         while True:
             message = input()
 
-            if message == "/disconnect":
+            if message == "/disc":
                 socket.send("DISC\r\n".encode())
                 socket.close()
+                self.thread_flags[recipient] = False
                 break
             elif message == "/exit":
+                self.thread_flags[recipient] = False
                 break 
 
-            socket.send(message.encode())
+            socket.send((message + " ").encode())
 
+    def print_messages(self, socket, recipient):
+        while self.thread_flags[recipient]:
+            message = self.received_messages(socket)
+            if message == "DISC\r\n":
+                socket.close()
+                return
+            elif message == "/exit":
+                return 
+            print(f"{recipient}: {message}")
+            
     # Recebe mensagens
     def received_messages(self, socket):
         received_message = None
@@ -152,5 +166,3 @@ class Client:
 
         return received_message.decode()
         
-    def print_messages(self, socket, recipient):
-        print(f"{recipient}: {self.received_messages(socket)}")

@@ -48,7 +48,7 @@ if __name__ == "__main__":
         elif command == "/send":
             client.print_peers_list()
             recipient = input("\nPara quem você deseja enviar a mensagem: ")
-            print("Entrou no chat! Para disconectar digite /disconnect. Para sair do chat digite /exit.")
+            print("Entrou no chat! Para disconectar digite /disc. Para sair do chat digite /exit.")
             client.send_message_to_peer(recipient)
         elif command == "/exit":
             # fechar conexões, etc
