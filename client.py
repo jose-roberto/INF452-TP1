@@ -26,13 +26,9 @@ class Client:
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
-        self.central_server_socket.connect((self.central_server_ip, self.central_server_port))
+        self.central_server_socket.connect(
+            (self.central_server_ip, self.central_server_port))
         # print("\nConectado ao servidor central!")
-    
-    def print_peers_list(self):
-        print("\nUsuários conectados:")
-        for i, (user, _) in enumerate(self.peers_list.items(),1):
-            print(f"{i}. {user}")
 
     # Mantém a conexão com o servidor central
     def keepalive(self):
@@ -48,8 +44,9 @@ class Client:
             _, self.p2p_listening_port = self.p2p_listening_socket.getsockname()
         except OSError:
             pass
-  
-        self.send_initial_message(self.central_server_socket, self.p2p_listening_port)
+
+        self.send_initial_message(
+            self.central_server_socket, self.p2p_listening_port)
 
     # Envia mensagem inicial ao servidor central
     def send_initial_message(self, socket, port):
@@ -81,7 +78,7 @@ class Client:
         self.central_server_socket.send("LIST\r\n".encode())
 
         list = self.received_messages(self.central_server_socket)
-        
+
         list = list.replace("\r\n", "")
         _, users = (list.split(' '))
 
@@ -94,9 +91,9 @@ class Client:
     # Obtém o endereço de um usuário
     def get_address(self, recipient):
         self.central_server_socket.send((f"ADDR {recipient}\r\n").encode())
-        
-        address= self.received_messages(self.central_server_socket)
-        
+
+        address = self.received_messages(self.central_server_socket)
+
         _, address = address.split(' ')
         ip, port = address.split(':')
 
@@ -114,55 +111,66 @@ class Client:
             self.send_initial_message(self.peers_list[recipient], -1)
 
         except TimeoutError:
-            print(f"Não foi possível conectar-se a {recipient} devido a um timeout.")
+            print(
+                f"Não foi possível conectar-se a {recipient} devido a um timeout.")
             return False
         except Exception as e:
             print(f"Erro ao conectar-se a {recipient}: {e}")
             return False
         return True
 
-    # Envia mensagem à um usuário
+    # Exibe a lista de peers ao qual tem-se conexão
+    def print_peers_list(self):
+        print("\nUsuários conectados:")
+        for i, (user, _) in enumerate(self.peers_list.items(), 1):
+            print(f"{i}. {user}")
+
+    # Envia as mensagens entre os peers que estão no bate-papo
     def send_message_to_peer(self, recipient):
         socket = self.peers_list[recipient]
         self.thread_flags[recipient] = True
 
-        comm_thread = threading.Thread(target=self.print_messages, args=(socket,recipient))
+        # Thread resposánvel pela exibição das mensagens recebidas
+        comm_thread = threading.Thread(
+            target=self.print_peer_messages, args=(socket, recipient))
         comm_thread.daemon = True
         comm_thread.start()
-        
+
         while True:
             message = input()
 
             if message == "/disc":
-                socket.send("DISC\r\n".encode())
                 socket.close()
                 self.thread_flags[recipient] = False
                 break
             elif message == "/exit":
                 self.thread_flags[recipient] = False
-                break 
+                break
 
             socket.send((message + " ").encode())
 
-    def print_messages(self, socket, recipient):
+    # Exibe as mensagens trocadas entre os peers
+    def print_peer_messages(self, socket, recipient):
         while self.thread_flags[recipient]:
             message = self.received_messages(socket)
             if message == "DISC\r\n":
                 socket.close()
-                return
+                break
             elif message == "/exit":
-                return 
+                break
             print(f"{recipient}: {message}")
-            
+
     # Recebe mensagens
     def received_messages(self, socket):
         received_message = None
-        
+
         try:
             received_message = socket.recv(1024)
         except TimeoutError:
             print("TimeoutError")
             return
+        # except ConnectionAbortedError:
+        #     print("Conexão finalizada!")
+        #     return
 
         return received_message.decode()
-        
