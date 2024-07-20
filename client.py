@@ -71,6 +71,7 @@ class Client:
 
         self.peers_list[user] = chat_socket
 
+        # dar um clear antes de printar, resolvendo a sobreposição
         print(f"\nConectado a: {user}\n")
 
     # Lista os usuários conectados
@@ -121,9 +122,14 @@ class Client:
 
     # Exibe a lista de peers ao qual tem-se conexão
     def print_peers_list(self):
+        if self.peers_list == {}:
+            print("\nNão há usuários conectados.")
+            return False
         print("\nUsuários conectados:")
         for i, (user, _) in enumerate(self.peers_list.items(), 1):
             print(f"{i}. {user}")
+
+        return True
 
     # Envia as mensagens entre os peers que estão no bate-papo
     def send_message_to_peer(self, recipient):
@@ -136,27 +142,36 @@ class Client:
         comm_thread.daemon = True
         comm_thread.start()
 
-        while True:
+        while self.thread_flags[recipient]:
             message = input()
 
-            if message == "/disc":
-                socket.close()
+            if message == "/exit":
                 self.thread_flags[recipient] = False
                 break
-            elif message == "/exit":
-                self.thread_flags[recipient] = False
-                break
+            elif message == "/disc":
+                socket.send("DISC\r\n".encode())
+                # #socket.close()
+                # self.thread_flags[recipient] = False
+                # del self.peers_list[recipient]
+                # break
 
             socket.send((message + " ").encode())
 
     # Exibe as mensagens trocadas entre os peers
     def print_peer_messages(self, socket, recipient):
-        while self.thread_flags[recipient]:
+        while True:
             message = self.received_messages(socket)
             if message == "DISC\r\n":
+                self.thread_flags[recipient] = False
                 socket.close()
+                del self.peers_list[recipient]
                 break
             elif message == "/exit":
+                break
+            elif message == "":
+                socket.close()
+                print(f'Desconectado de {recipient}')
+                self.thread_flags[recipient] = False
                 break
             print(f"{recipient}: {message}")
 
