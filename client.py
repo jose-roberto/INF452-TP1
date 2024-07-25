@@ -65,7 +65,10 @@ class Client:
 
         self.peers_list[user] = chat_socket
 
-        print(f"\nConectado a: {user}\n")
+        print(f"--------\n\nConectado a: {user}\n")
+
+        sys.stdout.write("Escolha uma ação: ")
+        sys.stdout.flush()
 
     # Lista os usuários conectados
     def print_list(self):
@@ -116,7 +119,7 @@ class Client:
     # Exibe a lista de peers ao qual tem-se conexão
     def print_peers_list(self):
         if self.peers_list == {}:
-            print("\nNão há usuários conectados.")
+            print("\nVocê não está conectado com ninguém.\nInicie um bate-papo com /chat.")
             return False
         print("\nUsuários conectados:")
         for i, (user, _) in enumerate(self.peers_list.items(), 1):
