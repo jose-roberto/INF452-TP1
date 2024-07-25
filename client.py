@@ -10,26 +10,24 @@ class Client:
     def __init__(self, username, central_server_ip, central_server_port):
         self.username = username
 
+        #Define credenciais do servidor e inicia conexao
         self.central_server_ip = central_server_ip
         self.central_server_port = central_server_port
 
         self.central_server_socket = socket(AF_INET, SOCK_STREAM)
         self.connect_to_central_server()
 
+        #Define porta a ser usada para conexoes
         self.p2p_listening_socket = socket(AF_INET, SOCK_STREAM)
         self.p2p_listening_port = None
-
         self.p2p_listening()
 
         self.peers_list = {}
-
         self.thread_flags = {}
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
-        self.central_server_socket.connect(
-            (self.central_server_ip, self.central_server_port))
-        # print("\nConectado ao servidor central!")
+        self.central_server_socket.connect((self.central_server_ip, self.central_server_port))
 
     # Mantém a conexão com o servidor central
     def keepalive(self):
@@ -46,8 +44,7 @@ class Client:
         except OSError:
             pass
 
-        self.send_initial_message(
-            self.central_server_socket, self.p2p_listening_port)
+        self.send_initial_message(self.central_server_socket, self.p2p_listening_port)
 
     # Envia mensagem inicial ao servidor central
     def send_initial_message(self, socket, port):
@@ -129,8 +126,14 @@ class Client:
 
     # Envia as mensagens entre os peers que estão no bate-papo
     def send_message_to_peer(self, recipient):
-        socket = self.peers_list[recipient]
-        self.thread_flags[recipient] = True
+        try:
+            socket = self.peers_list[recipient]
+            self.thread_flags[recipient] = True
+        except KeyError:
+            print('Usuário inválido.')
+            return
+        
+        print("Entrou no chat!\nPara disconectar digite /disc.")
 
         # Thread resposánvel pela exibição das mensagens recebidas
         comm_thread = threading.Thread(target=self.print_peer_messages, args=(socket, recipient))
@@ -142,10 +145,6 @@ class Client:
 
             if not self.thread_flags[recipient]:
                 break
-            elif message == "/exit":
-                socket.send("EXIT\r\n".encode())
-                self.thread_flags[recipient] = False
-                break
             elif message == "/disc":
                 socket.send("DISC\r\n".encode())
                 break
@@ -154,15 +153,16 @@ class Client:
 
     # Exibe as mensagens trocadas entre os peers
     def print_peer_messages(self, socket, recipient):
-        while self.thread_flags[recipient]:
+        while True:
             message = self.received_messages(socket)
-            if message == "DISC\r\n":
+
+            if not self.thread_flags[recipient]:
+                break
+            elif message == "DISC\r\n":
                 socket.close()
                 self.peers_list.pop(recipient)
                 self.thread_flags[recipient] = False
-                print("Peer se desconectou :(. Envie qualquer mensagem para retornar ao menu.)")
-                break
-            elif message == "EXIT\r\n":
+                print("Peer se desconectou. Envie qualquer mensagem para retornar ao menu.")
                 break
             elif message == "":
                 socket.close()
@@ -171,7 +171,6 @@ class Client:
                 break
             
             print(f"{recipient}: {message}")
-
 
     # Recebe mensagens
     def received_messages(self, socket):
@@ -184,3 +183,8 @@ class Client:
             return
 
         return received_message.decode()
+    
+    def close_connections(self):
+        for sock in self.peers_list.values():
+            sock.close()
+

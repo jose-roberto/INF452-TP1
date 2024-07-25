@@ -12,7 +12,7 @@ def keepalive(client):
         client.keepalive()
         time.sleep(5)
 
-# Função para verificar se há novas mensagens
+# Função para verificar se há solicitações de conexão
 def check_requests(client):
     while True:
         client.check_requests()
@@ -35,6 +35,7 @@ if __name__ == "__main__":
     listener_thread.daemon = True
     listener_thread.start()
 
+    #Menu principal
     while True:
         command = input(
             "\n---------- Menu ----------\nListar usuários: /list\nIniciar bate-papo: /chat\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
@@ -45,16 +46,13 @@ if __name__ == "__main__":
             recipient = input("\nCom qual usuário você deseja conversar: ")
             
             if client.connect_to_peer(recipient):
-                print("Conectado com sucesso!")
+                print("Conectado com sucesso!\n")
         elif command == "/send":
             if client.print_peers_list():
-                recipient = input("\nPara quem você deseja enviar a mensagem: ")
-                
-                print("Entrou no chat!\nPara disconectar digite /disc. Para sair do chat digite /exit.")
-                
+                recipient = input("\nPara quem você deseja enviar a mensagem: ")                
                 client.send_message_to_peer(recipient)
         elif command == "/exit":
-            # fechar conexões, etc
+            client.close_connections()
             break
-        # else:
-        #     print("\n--- commando inválido, tente novamente.")
+        else:
+            print("\n--- commando inválido, tente novamente.")
