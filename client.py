@@ -22,6 +22,7 @@ class Client:
         self.p2p_listening()
 
         self.peers_list = {}
+
         self.thread_flags = {}
 
     # Conecta-se ao servidor central
@@ -61,17 +62,12 @@ class Client:
 
     # Verifica se há novas requisições de conexão
     def check_requests(self):
-        # ready_to_read,_,_=select.select([self.p2p_listening_socket,self.central_server_socket,sys.stdin],[],[])
-        # for sock in ready_to_read:
-        #     if sock == self.p2p_listening_socket:
-
         chat_socket, _ = self.p2p_listening_socket.accept()  # Aceita uma conexão
         received = self.received_messages(chat_socket)
         user = (received.split(' ')[1]).replace("\r\n", "")
 
         self.peers_list[user] = chat_socket
 
-        # dar um clear antes de printar, resolvendo a sobreposição
         print(f"\nConectado a: {user}\n")
 
     # Lista os usuários conectados
@@ -137,43 +133,45 @@ class Client:
         self.thread_flags[recipient] = True
 
         # Thread resposánvel pela exibição das mensagens recebidas
-        comm_thread = threading.Thread(
-            target=self.print_peer_messages, args=(socket, recipient))
+        comm_thread = threading.Thread(target=self.print_peer_messages, args=(socket, recipient))
         comm_thread.daemon = True
         comm_thread.start()
 
-        while self.thread_flags[recipient]:
+        while True:
             message = input()
 
-            if message == "/exit":
+            if not self.thread_flags[recipient]:
+                break
+            elif message == "/exit":
+                socket.send("EXIT\r\n".encode())
                 self.thread_flags[recipient] = False
                 break
             elif message == "/disc":
                 socket.send("DISC\r\n".encode())
-                # #socket.close()
-                # self.thread_flags[recipient] = False
-                # del self.peers_list[recipient]
-                # break
+                break
 
             socket.send((message + " ").encode())
 
     # Exibe as mensagens trocadas entre os peers
     def print_peer_messages(self, socket, recipient):
-        while True:
+        while self.thread_flags[recipient]:
             message = self.received_messages(socket)
             if message == "DISC\r\n":
-                self.thread_flags[recipient] = False
                 socket.close()
-                del self.peers_list[recipient]
+                self.peers_list.pop(recipient)
+                self.thread_flags[recipient] = False
+                print("Peer se desconectou :(. Envie qualquer mensagem para retornar ao menu.)")
                 break
-            elif message == "/exit":
+            elif message == "EXIT\r\n":
                 break
             elif message == "":
                 socket.close()
-                print(f'Desconectado de {recipient}')
+                self.peers_list.pop(recipient)
                 self.thread_flags[recipient] = False
                 break
+            
             print(f"{recipient}: {message}")
+
 
     # Recebe mensagens
     def received_messages(self, socket):
@@ -184,8 +182,5 @@ class Client:
         except TimeoutError:
             print("TimeoutError")
             return
-        # except ConnectionAbortedError:
-        #     print("Conexão finalizada!")
-        #     return
 
         return received_message.decode()
