@@ -99,6 +99,7 @@ class Peer:
     def connect_to_peer(self, recipient):
         try:
             ip, port = self.get_address(recipient)
+            ip = '127.0.0.1'
 
             self.peers_list[recipient] = socket(AF_INET, SOCK_STREAM)
 
@@ -151,7 +152,7 @@ class Peer:
                 socket.send("DISC\r\n".encode())
                 break
 
-            socket.send((message + " ").encode())
+            socket.send((message + "\n").encode())
 
     # Exibe as mensagens trocadas entre os peers
     def print_peer_messages(self, socket, recipient):
@@ -172,7 +173,9 @@ class Peer:
                 self.thread_flags[recipient] = False
                 break
             
-            print(f"{recipient}: {message}")
+            for text in message.split('\n'):
+                if text:
+                    print(f"{recipient}: {text}")
 
     # Recebe mensagens
     def received_messages(self, socket):
