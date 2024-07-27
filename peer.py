@@ -1,11 +1,10 @@
 # Bibliotecas necessárias
-import select
 from socket import *
 import threading
 import sys
 
 
-class Client:
+class Peer:
     # Construtor
     def __init__(self, username, central_server_ip, central_server_port):
         self.username = username

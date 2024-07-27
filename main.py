@@ -1,5 +1,5 @@
 # Bibliotecas necessárias
-from client import *
+from peer import *
 import time
 
 # Endereço do servidor central
@@ -7,31 +7,31 @@ CENTRAL_SERVER_IP = "200.235.131.66"
 CENTRAL_SERVER_PORT = 10000
 
 # Função para manter a conexão com o servidor central
-def keepalive(client):
+def keepalive(peer):
     while True:
-        client.keepalive()
+        peer.keepalive()
         time.sleep(5)
 
 # Função para verificar se há solicitações de conexão
-def check_requests(client):
+def check_requests(peer):
     while True:
-        client.check_requests()
+        peer.check_requests()
 
 if __name__ == "__main__":
     print("Bem-vindo ao Whatsapp 2!")
 
     username = input("Digite o seu nome de usuário: ")
 
-    # Inicializa o cliente
-    client = Client(username, CENTRAL_SERVER_IP, CENTRAL_SERVER_PORT)
+    # Inicializa o peere
+    peer = Peer(username, CENTRAL_SERVER_IP, CENTRAL_SERVER_PORT)
             
     # Inicia a thread para manter a conexão com o servidor central
-    keepalive_thread = threading.Thread(target=keepalive, args=(client,))
+    keepalive_thread = threading.Thread(target=keepalive, args=(peer,))
     keepalive_thread.daemon = True
     keepalive_thread.start()
 
     # Inicia a thread para verificar novas mensagens
-    listener_thread = threading.Thread(target=check_requests, args=(client,))
+    listener_thread = threading.Thread(target=check_requests, args=(peer,))
     listener_thread.daemon = True
     listener_thread.start()
 
@@ -41,18 +41,18 @@ if __name__ == "__main__":
             "\n---------- Menu ----------\nListar usuários: /list\nIniciar bate-papo: /chat\nEnviar mensagem: /send\nSair: /exit\n\nEscolha uma ação: ")
 
         if command == "/list":
-            client.print_list()
+            peer.print_list()
         elif command == "/chat":
             recipient = input("\nCom qual usuário você deseja conversar: ")
             
-            if client.connect_to_peer(recipient):
+            if peer.connect_to_peer(recipient):
                 print("Conectado com sucesso!\n")
         elif command == "/send":
-            if client.print_peers_list():
+            if peer.print_peers_list():
                 recipient = input("\nPara quem você deseja enviar a mensagem: ")                
-                client.send_message_to_peer(recipient)
+                peer.send_message_to_peer(recipient)
         elif command == "/exit":
-            client.close_connections()
+            peer.close_connections()
             break
         else:
-            print("\n--- commando inválido, tente novamente.")
+            print("\n- Comando inválido, tente novamente.")
