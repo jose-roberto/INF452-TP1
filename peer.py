@@ -99,7 +99,6 @@ class Peer:
     def connect_to_peer(self, recipient):
         try:
             ip, port = self.get_address(recipient)
-            ip = '127.0.0.1'
 
             self.peers_list[recipient] = socket(AF_INET, SOCK_STREAM)
 
