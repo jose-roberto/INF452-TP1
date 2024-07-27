@@ -158,9 +158,13 @@ class Peer:
         while True:
             message = self.received_messages(socket)
 
+            for text in message.split('\n'):
+                if text and text != "DISC\r":
+                    print(f"{recipient}: {text}")
+
             if not self.thread_flags[recipient]:
                 break
-            elif message == "DISC\r\n":
+            elif "DISC\r\n" in message:
                 socket.close()
                 self.peers_list.pop(recipient)
                 self.thread_flags[recipient] = False
@@ -171,10 +175,6 @@ class Peer:
                 self.peers_list.pop(recipient)
                 self.thread_flags[recipient] = False
                 break
-            
-            for text in message.split('\n'):
-                if text:
-                    print(f"{recipient}: {text}")
 
     # Recebe mensagens
     def received_messages(self, socket):
