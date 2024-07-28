@@ -1,3 +1,6 @@
+# José Roberto Martins Costa Júnior - 105480
+# Thiago Zimerer Duarte - 108206
+
 # Bibliotecas necessárias
 from socket import *
 import threading
@@ -9,14 +12,14 @@ class Peer:
     def __init__(self, username, central_server_ip, central_server_port):
         self.username = username
 
-        #Define credenciais do servidor e inicia conexao
+        # Define credenciais do servidor e inicia conexao
         self.central_server_ip = central_server_ip
         self.central_server_port = central_server_port
 
         self.central_server_socket = socket(AF_INET, SOCK_STREAM)
         self.connect_to_central_server()
 
-        #Define porta a ser usada para conexoes
+        # Define porta a ser usada para conexoes
         self.p2p_listening_socket = socket(AF_INET, SOCK_STREAM)
         self.p2p_listening_port = None
         self.p2p_listening()
@@ -26,7 +29,8 @@ class Peer:
 
     # Conecta-se ao servidor central
     def connect_to_central_server(self):
-        self.central_server_socket.connect((self.central_server_ip, self.central_server_port))
+        self.central_server_socket.connect(
+            (self.central_server_ip, self.central_server_port))
 
     # Mantém a conexão com o servidor central
     def keepalive(self):
@@ -43,7 +47,8 @@ class Peer:
         except OSError:
             pass
 
-        self.send_initial_message(self.central_server_socket, self.p2p_listening_port)
+        self.send_initial_message(
+            self.central_server_socket, self.p2p_listening_port)
 
     # Envia mensagem inicial ao servidor central
     def send_initial_message(self, socket, port):
@@ -110,15 +115,16 @@ class Peer:
             print(
                 f"Não foi possível conectar-se a {recipient} devido a um timeout.")
             return False
-        except Exception as e:
-            print(f"Erro ao conectar-se a {recipient}: {e}")
+        except Exception:
+            print(f"Erro ao conectar-se a {recipient}.")
             return False
         return True
 
     # Exibe a lista de peers ao qual tem-se conexão
     def print_peers_list(self):
         if self.peers_list == {}:
-            print("\nVocê não está conectado com ninguém.\nInicie um bate-papo com /chat.")
+            print(
+                "\nVocê não está conectado com ninguém.\nInicie um bate-papo com /chat.")
             return False
         print("\nUsuários conectados:")
         for i, (user, _) in enumerate(self.peers_list.items(), 1):
@@ -134,11 +140,12 @@ class Peer:
         except KeyError:
             print('Usuário inválido.')
             return
-        
+
         print("Entrou no chat!\nPara disconectar digite /disc.")
 
         # Thread resposánvel pela exibição das mensagens recebidas
-        comm_thread = threading.Thread(target=self.print_peer_messages, args=(socket, recipient))
+        comm_thread = threading.Thread(
+            target=self.print_peer_messages, args=(socket, recipient))
         comm_thread.daemon = True
         comm_thread.start()
 
@@ -168,7 +175,8 @@ class Peer:
                 socket.close()
                 self.peers_list.pop(recipient)
                 self.thread_flags[recipient] = False
-                print("Peer se desconectou. Envie qualquer mensagem para retornar ao menu.")
+                print(
+                    "Peer se desconectou. Envie qualquer mensagem para retornar ao menu.")
                 break
             elif message == "":
                 socket.close()
@@ -187,8 +195,8 @@ class Peer:
             return
 
         return received_message.decode()
-    
+
     def close_connections(self):
         for sock in self.peers_list.values():
+            sock.send("DISC\r\n".encode())
             sock.close()
-
