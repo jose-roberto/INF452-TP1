@@ -10,16 +10,12 @@ CENTRAL_SERVER_IP = "200.235.131.66"
 CENTRAL_SERVER_PORT = 10000
 
 # Função para manter a conexão com o servidor central
-
-
 def keepalive(peer):
     while True:
         peer.keepalive()
         time.sleep(5)
 
 # Função para verificar se há solicitações de conexão
-
-
 def check_requests(peer):
     while True:
         peer.check_requests()
