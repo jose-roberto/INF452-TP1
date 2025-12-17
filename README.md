@@ -1,5 +1,5 @@
 # INF452-TP1
-Trabalho Prático 1 da disciplina de Redes de Computadores - INF452
+Trabalho prático da disciplina INF452 - Redes de Computadores.
 
 ## Alunos:
 1. José Roberto Martins Costa Júnior - 105480
